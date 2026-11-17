@@ -4,7 +4,7 @@
 // You fill them with "Import from laptop", which reads the folder made by ~/Documents/sde2-prep/jobs/tailor.py.
 
 const STATUSES = [["new", "New"], ["applied", "Applied"], ["interviewing", "Interviewing"], ["offer", "Offer"], ["rejected", "Rejected"], ["skipped", "Not applying"]];
-const FILTERS = [["all", "All"], ["hyd", "Hyderabad"], ["remote", "Remote"], ["pay", "Pay ≥ ₹34L (stated or likely)"], ["new", "Not applied yet"], ["active", "Applied / interviewing"]];
+const FILTERS = [["all", "All open"], ["fresh", "New this search"], ["hyd", "Hyderabad"], ["remote", "Remote"], ["pay", "Pay ≥ ₹34L (stated or likely)"], ["new", "Not applied yet"], ["active", "Applied / interviewing"], ["closed", "Closed"]];
 const REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 let sb = null, user = null, rows = [], loading = true, authMsg = "", importing = "", filter = "all", query = "";
@@ -29,7 +29,7 @@ async function load() {
   const { data, error } = await sb.from("jobs").select("key,data,status,notes,updated_at");
   loading = false;
   if (error) { rows = []; render(); snack("Couldn't load your jobs: " + error.message, "error"); return; }
-  rows = data.sort((a, b) => (a.data.id || 999) - (b.data.id || 999));
+  rows = data.sort((a, b) => (!!a.data.closed - !!b.data.closed) || (a.data.id || 999) - (b.data.id || 999));
   render();
 }
 async function setStatus(key, status) {
@@ -80,6 +80,17 @@ async function importFolder(fileList) {
     if (mail) data.email_text = await mail.text();
     out.push({ user_id: user.id, key, data, imported_at: new Date().toISOString() });
   }
+  // Postings you imported before that the latest build dropped (closed, stale…) are marked closed, keeping your status and notes.
+  const dropFile = byPath.get(root + "dropped.json");
+  if (dropFile) {
+    let dropped = [];
+    try { dropped = JSON.parse(await dropFile.text()); } catch (e) {}
+    const inImport = new Set(out.map(o => o.key));
+    for (const x of Array.isArray(dropped) ? dropped : []) {
+      const old = x && x.url && !inImport.has(x.url) && rows.find(r => r.key === x.url);
+      if (old && !old.data.closed) out.push({ user_id: user.id, key: old.key, data: { ...old.data, closed: (x.why || []).join("; ") || "dropped", new_this_run: false }, imported_at: new Date().toISOString() });
+    }
+  }
   importing = "Saving the list…"; render();
   for (let i = 0; i < out.length; i += 50) {
     // status and notes aren't sent, so re-importing keeps them
@@ -87,13 +98,15 @@ async function importFolder(fileList) {
     if (error) { importing = ""; render(); snack("Saving failed: " + error.message, "error"); return; }
   }
   importing = "";
-  snack(`Imported ${out.length} jobs` + (missing ? ` (${missing} without a resume file)` : ""), "cloud_done");
+  snack(`Imported ${jobs.length} jobs` + (missing ? ` (${missing} without a resume file)` : ""), "cloud_done");
   await load();
 }
 
 // ---------- rendering ----------
 function matches(r) {
   const d = r.data, loc = (d.location || "").toLowerCase();
+  if ((filter === "closed") !== !!d.closed) return false;
+  if (filter === "fresh" && !d.new_this_run) return false;
   if (filter === "hyd" && !loc.includes("hyderabad")) return false;
   if (filter === "remote" && d.work_mode !== "remote") return false;
   if (filter === "pay" && !["yes", "likely"].includes(d.pay_meets_34L)) return false;
@@ -119,18 +132,21 @@ function jobCard(r) {
   <div class="jtop">
     <div class="jlogo">${esc((d.company || "?").trim()[0])}</div>
     <div class="jhead">
-      <span class="label">${esc(d.company)}${hyd ? ' · <span style="color:var(--primary)">Hyderabad</span>' : ""}</span>
+      <span class="label">${d.closed ? '<span class="jpill unk">Closed</span> ' : d.new_this_run ? '<span class="jpill ok">New</span> ' : ""}${esc(d.company)}${hyd ? ' · <span style="color:var(--primary)">Hyderabad</span>' : ""}</span>
       <h3 class="title">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(d.title)}</a>` : esc(d.title)}</h3>
-      <div class="tmeta"><span><span class="icon" style="font-size:16px;vertical-align:-3px">location_on</span> ${esc(d.location)}</span><span>${esc(d.work_mode || "")}</span><span>${esc(d.years_text || (d.min_years != null ? d.min_years + "+ yrs" : ""))}</span><span>posted ${esc(d.posted || "?")}</span></div>
+      <div class="tmeta"><span><span class="icon" style="font-size:16px;vertical-align:-3px">location_on</span> ${esc(d.location)}</span><span>${esc(d.work_mode || "")}</span><span>${esc(d.years_text || (d.min_years != null ? d.min_years + "+ yrs" : ""))}</span><span>posted ${esc(d.posted || "?")}</span>${d.first_seen ? `<span>found ${esc(d.first_seen)}</span>` : ""}</div>
     </div>
     <div class="jmatch" title="Share of the posting's skills that are on your resume">${fit.match_pct != null ? fit.match_pct + "%" : "–"}<small>match</small></div>
   </div>
+  ${d.closed ? `<div class="callout" style="padding:10px 14px"><span class="icon fill">block</span><span>No longer listed: ${esc(d.closed)}</span></div>` : ""}
   ${d.warning ? `<div class="callout" style="padding:10px 14px"><span class="icon fill">warning</span><span>${esc(d.warning)}</span></div>` : ""}
   <div class="jrow">${payPill(d)}<span class="body-s">${esc(d.pay_stated || d.pay_estimate || "No pay information")}${paySrc ? ` · <a href="${esc(paySrc)}" target="_blank" rel="noopener">source</a>` : ""}</span></div>
   <div class="jrow"><span class="jpill ${d.india_eligible === "yes" ? "ok" : "unk"}">India: ${esc(d.india_eligible)}</span><span class="body-s q">${esc(d.eligibility_evidence)}</span></div>
   ${fit.gaps && fit.gaps.length ? `<div class="jrow"><span class="body-s">Not on your resume:</span>${fit.gaps.map(g => `<span class="tag k-mock">${esc(g)}</span>`).join("")}</div>` : ""}
   ${d.notes ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">info</span>Search notes<span class="icon chev">expand_more</span></summary><p class="body-s" style="margin:0;padding:4px 14px 12px">${esc(d.notes)}</p></details>` : ""}
-  ${d.email_text ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">mail</span>Email draft to ${esc(d.contact_email)}<span class="icon chev">expand_more</span></summary><pre class="jmail">${esc(d.email_text)}</pre><div style="padding:0 12px 12px"><button class="btn tonal ripple" data-copy="${esc(r.key)}"><span class="icon">content_copy</span>Copy text</button></div></details>` : ""}
+  ${d.cover_note ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">edit_note</span>Cover note (for a cover-letter box or a referral request)<span class="icon chev">expand_more</span></summary><pre class="jmail">${esc(d.cover_note)}</pre><div style="padding:0 12px 12px"><button class="btn tonal ripple" data-copy="${esc(r.key)}" data-what="cover_note"><span class="icon">content_copy</span>Copy text</button></div></details>` : ""}
+  ${d.email_text ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">mail</span>Email draft to ${esc(d.contact_email)}<span class="icon chev">expand_more</span></summary><pre class="jmail">${esc(d.email_text)}</pre><div style="padding:0 12px 12px"><button class="btn tonal ripple" data-copy="${esc(r.key)}" data-what="email_text"><span class="icon">content_copy</span>Copy text</button></div></details>` : ""}
+  ${(d.referrals || []).length ? `<div class="jrow"><span class="body-s">Ask for a referral:</span>${d.referrals.filter(x => safeUrl(x.url)).map(x => `<a class="chip ripple" href="${esc(x.url)}" target="_blank" rel="noopener"><span class="icon">group</span><span class="t">${esc(x.label)}</span></a>`).join("")}</div>` : ""}
   <div class="jactions">
     ${d.resume_path ? `<button class="btn filled ripple" data-resume="${esc(d.resume_path)}"><span class="icon">description</span>Tailored resume</button>` : ""}
     ${url ? `<a class="btn outlined ripple" href="${esc(url)}" target="_blank" rel="noopener"><span class="icon">open_in_new</span>Posting</a>` : ""}
@@ -152,13 +168,14 @@ function signInCard() {
 function render() {
   const el = document.getElementById("jobsView");
   if (!user) { el.innerHTML = loading && sb ? `<p class="body-s">Loading…</p>` : signInCard(); return; }
+  const open = rows.filter(r => !r.data.closed).length, fresh = rows.filter(r => !r.data.closed && r.data.new_this_run).length;
   const counts = { all: rows.length, applied: rows.filter(r => r.status === "applied").length, interviewing: rows.filter(r => r.status === "interviewing").length, offer: rows.filter(r => r.status === "offer").length };
   const shown = rows.filter(matches);
   const importBtn = `<label class="btn ${rows.length ? "outlined" : "filled"} ripple" for="folder" style="cursor:pointer"><span class="icon">drive_folder_upload</span>${rows.length ? "Re-import from laptop" : "Import from laptop"}</label><input type="file" id="folder" webkitdirectory directory multiple hidden>`;
   let h = `<section class="card">
     <div class="secthead"><span class="icon" style="color:var(--primary)">work</span><div><span class="label">Private · ${esc(user.email || "")}</span><h1 class="headline">Job leads</h1></div></div><div class="jhead-actions">${importBtn}<button class="btn outlined ripple" id="signOut"><span class="icon">logout</span>Sign out</button></div>
     ${importing ? `<div class="status"><span class="icon">cloud_upload</span><span>${esc(importing)}</span></div>` : ""}
-    ${rows.length ? `<div class="jstats"><div><b>${counts.all}</b><span>jobs</span></div><div><b>${counts.applied}</b><span>applied</span></div><div><b>${counts.interviewing}</b><span>interviewing</span></div><div><b>${counts.offer}</b><span>offers</span></div></div>` :
+    ${rows.length ? `<div class="jstats"><div><b>${fresh}</b><span>new</span></div><div><b>${open}</b><span>open</span></div><div><b>${counts.applied}</b><span>applied</span></div><div><b>${counts.interviewing}</b><span>interviewing</span></div><div><b>${counts.offer}</b><span>offers</span></div></div>` :
       `<p class="body-s" style="margin:0">No jobs yet. On your laptop, click <b>Import from laptop</b> and choose the folder <span class="mono">Documents/sde2-prep/jobs</span>. The list and the tailored resumes upload to your private Supabase storage, and then this page works on your phone too.</p>`}
   </section>`;
   if (rows.length) {
@@ -187,7 +204,7 @@ document.addEventListener("click", async e => {
   else if (t.dataset.filter) { filter = t.dataset.filter; render(); }
   else if (t.dataset.copy) {
     const r = rows.find(x => x.key === t.dataset.copy);
-    try { await navigator.clipboard.writeText(r.data.email_text); snack("Email copied", "content_copy"); } catch (err) { snack("Copy failed: select the text instead", "error"); }
+    try { await navigator.clipboard.writeText(r.data[t.dataset.what] || ""); snack("Copied", "content_copy"); } catch (err) { snack("Copy failed: select the text instead", "error"); }
   } else if (t.id === "signOut") { await sb.auth.signOut(); }
   else if (t.hasAttribute("data-theme-toggle")) cycleTheme();
 });
