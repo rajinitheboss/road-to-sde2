@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jobs · Road to SDE-2</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#3a5bd0">
+<script>
+  try { var t = localStorage.getItem("sde2-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,600;8..144,700;8..144,800&family=Roboto+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400..500,0..1,0&display=block">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+    <a class="logo" href="/#today" aria-label="Road to SDE-2, home">S2</a>
+    <nav aria-label="Sections">
+      <a class="dest" href="/#today"><span class="pill ripple"><span class="icon">today</span></span>Today</a>
+      <a class="dest" href="/#plan"><span class="pill ripple"><span class="icon">calendar_month</span></span>Plan</a>
+      <a class="dest" href="/#method"><span class="pill ripple"><span class="icon">school</span></span>Method</a>
+      <a class="dest" href="/#resources"><span class="pill ripple"><span class="icon">auto_stories</span></span>Resources</a>
+      <a class="dest" href="/jobs" aria-current="page"><span class="pill ripple"><span class="icon">work</span></span>Jobs</a>
+    </nav>
+    <div class="spacer"></div>
+    <button class="ibtn ripple" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="icon">contrast</span></button>
+  </aside>
+
+  <div class="main">
+    <header class="appbar" id="appbar">
+      <div class="ttl"><span>Jobs</span><small>private · only you can see this</small></div>
+      <span class="ibtn" id="lockIcon" role="img" aria-label="Private page" title="Private: only visible after you sign in"><span class="icon">lock</span></span>
+      <button class="ibtn ripple mobile-only" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="icon">contrast</span></button>
+    </header>
+    <main class="content">
+      <section id="jobsView" class="view stack enter"></section>
+    </main>
+  </div>
+</div>
+
+<nav class="bottombar" aria-label="Sections">
+  <a class="dest" href="/#today"><span class="pill ripple"><span class="icon">today</span></span>Today</a>
+  <a class="dest" href="/#plan"><span class="pill ripple"><span class="icon">calendar_month</span></span>Plan</a>
+  <a class="dest" href="/#method"><span class="pill ripple"><span class="icon">school</span></span>Method</a>
+  <a class="dest" href="/#resources"><span class="pill ripple"><span class="icon">auto_stories</span></span>Learn</a>
+  <a class="dest" href="/jobs" aria-current="page"><span class="pill ripple"><span class="icon">work</span></span>Jobs</a>
+</nav>
+
+<div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/config.js"></script>
+<script src="/jobs.js"></script>
+</body>
+</html>

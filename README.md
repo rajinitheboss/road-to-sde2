@@ -24,6 +24,9 @@ All motion turns off if your device is set to *reduce motion*, and the 3D model 
 | `data/nc.js` | The NeetCode 150 list, generated from NeetCode's own data. |
 | `config.js` | Your Supabase URL and anon key (empty until you fill them in). |
 | `supabase/migrations/001_progress.sql` | Creates the `progress` table and its security rules. |
+| `jobs.html`, `jobs.js` | The private `/jobs` page: your job leads and tailored resumes, visible only after you sign in. |
+| `supabase/migrations/002_jobs.sql` | Creates the private `jobs` table and the private `resumes` storage bucket. |
+| `vercel.json` | Lets Vercel serve `jobs.html` at `/jobs`. |
 
 ## Run it on your laptop
 
@@ -64,3 +67,19 @@ Then open http://localhost:8765. Stop it with `Ctrl+C`.
 - Links for career tasks live in `CAREER_LINKS`.
 - Career tasks are in `CAREER`, keyed by day number. The DSA tasks for days 51–60 are in `DSA_LATE`.
 - Ticks are stored by key (`p:<leetcode-slug>` for problems, `d<day>:design`, `d<day>:career`, `d<day>:dsa`), so editing text doesn't lose progress. Moving an item to a different day does change which day it counts towards.
+
+## Private jobs page (`/jobs`)
+
+Your job leads and tailored resumes are **not in this repo**: they contain your phone number and email, and the repo is public.
+They live in your Supabase project, and row-level security means only your signed-in account can read them.
+
+One-time setup:
+1. Supabase → *SQL Editor* → run `supabase/migrations/002_jobs.sql`.
+2. Supabase → *Authentication* → *URL Configuration* → *Redirect URLs*: add `https://road-to-sde2.vercel.app/**`, so the sign-in link can return to `/jobs`.
+
+Filling it (on your laptop):
+1. Run the job search and `python3 tailor.py` in `~/Documents/sde2-prep/jobs` (see the README there).
+2. Open `/jobs`, sign in, click **Import from laptop**, and choose the folder `Documents/sde2-prep/jobs`.
+   The list, the resumes and the email drafts upload to your private Supabase storage.
+3. After that, the page works on any device. Set each job's status and notes as you go.
+   Re-importing after a new search updates the postings and **keeps** your statuses and notes.
