@@ -5,31 +5,71 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Road to SDE-2</title>
 <meta name="description" content="A 60-day, 3-hours-a-day plan from SDE-1 to SDE-2 offers, with a progress tracker.">
+<meta name="theme-color" content="#3a5bd0">
+<script>
+  // Apply the saved theme before first paint so there's no flash.
+  try { var t = localStorage.getItem("sde2-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500;8..144,600;8..144,700;8..144,800&family=Roboto+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400..500,0..1,0&display=block">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="shell">
+  <aside class="rail">
+    <a class="logo" href="#today" aria-label="Road to SDE-2, home">S2</a>
+    <nav aria-label="Sections">
+      <a class="dest" href="#today"><span class="pill ripple"><span class="icon">today</span></span>Today</a>
+      <a class="dest" href="#plan"><span class="pill ripple"><span class="icon">calendar_month</span></span>Plan</a>
+      <a class="dest" href="#method"><span class="pill ripple"><span class="icon">school</span></span>Method</a>
+      <a class="dest" href="#resources"><span class="pill ripple"><span class="icon">auto_stories</span></span>Resources</a>
+    </nav>
+    <div class="spacer"></div>
+    <button class="ibtn ripple" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="icon">contrast</span></button>
+  </aside>
 
+  <div class="main">
+    <header class="appbar" id="appbar">
+      <div class="ttl"><span id="viewTitle">Today</span><small>Road to SDE-2 · 60 days · 3 h/day</small></div>
+      <span class="ibtn" id="syncIcon" role="img" aria-label="Sync status" title="Sync status"><span class="icon">cloud_off</span></span>
+      <button class="ibtn ripple mobile-only" data-theme-toggle aria-label="Switch colour theme" title="Switch colour theme"><span class="icon">contrast</span></button>
+    </header>
 
-<header class="top"><div class="wrap">
-  <div class="brand">Road to SDE-2 <small>60 days · 3 h/day</small></div>
-  <nav class="tabs" aria-label="Sections">
-    <a href="#today">Today</a><a href="#plan">60-day plan</a><a href="#method">How to study</a><a href="#resources">Resources</a>
-  </nav>
-</div></header>
+    <main class="content">
+      <section id="v-today" class="view stack" hidden>
+        <div class="hero">
+          <div class="copy" id="heroCopy"></div>
+          <div class="scene" id="scene" aria-label="3D model of your 60 days. Each block is a day; taller and coloured means more done. Drag to rotate, tap a block to open that day." role="img">
+            <div class="tip" id="sceneTip"></div>
+            <div class="hint"><span class="icon" style="font-size:16px">3d_rotation</span>Drag to rotate · tap a day</div>
+          </div>
+        </div>
+        <div id="todayBody" class="stack"></div>
+      </section>
+      <section id="v-plan" class="view stack" hidden></section>
+      <section id="v-method" class="view stack" hidden></section>
+      <section id="v-resources" class="view stack" hidden></section>
+    </main>
+  </div>
+</div>
 
-<main class="wrap">
-  <section id="v-today" class="stack" hidden></section>
-  <section id="v-plan" class="stack" hidden></section>
-  <section id="v-method" class="stack" hidden></section>
-  <section id="v-resources" class="stack" hidden></section>
-</main>
+<nav class="bottombar" aria-label="Sections">
+  <a class="dest" href="#today"><span class="pill ripple"><span class="icon">today</span></span>Today</a>
+  <a class="dest" href="#plan"><span class="pill ripple"><span class="icon">calendar_month</span></span>Plan</a>
+  <a class="dest" href="#method"><span class="pill ripple"><span class="icon">school</span></span>Method</a>
+  <a class="dest" href="#resources"><span class="pill ripple"><span class="icon">auto_stories</span></span>Resources</a>
+</nav>
+
+<div class="snackbar" id="snackbar" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="data/nc.js"></script>
 <script src="data/plan.js"></script>
+<script src="scene3d.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

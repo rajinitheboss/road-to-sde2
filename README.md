@@ -8,13 +8,18 @@ A 60-day, 3-hours-a-day study plan from SDE-1 to SDE-2 offers, with a built-in p
 
 It's a plain static site with no build step: HTML, CSS and JavaScript only.
 
+**Look and feel:** Material Design 3 (tonal colours, rounded cards, Material Symbols icons, ripples), with a navigation rail on desktop and a bottom bar on phones, plus light, dark and follow-the-system themes.
+The Today page has a 3D model of your 60 days built with Three.js: one block per day, taller and coloured as you finish it, with today's block glowing. Drag it to rotate, or tap a block to open that day. Cards tilt in 3D under the mouse, and sections fold open in 3D.
+All motion turns off if your device is set to *reduce motion*, and the 3D model falls back to a flat grid where WebGL isn't available.
+
 ## Files
 
 | File | What it is |
 |---|---|
 | `index.html` | The page skeleton. Loads everything else. |
-| `styles.css` | All styling, light and dark mode. |
-| `app.js` | Schedule logic, saving (browser + Supabase), sign-in, and drawing the page. |
+| `styles.css` | All styling (Material Design 3 tokens, light and dark themes, animations). |
+| `scene3d.js` | The 3D days model on the Today page (Three.js). |
+| `app.js` | Schedule logic, saving (browser + Supabase), sign-in, drawing the pages, ripples, tilt and theme switch. |
 | `data/plan.js` | **The plan content**: 60 design/revision sessions, career tasks, late-phase DSA tasks, links. Edit this to change the plan. |
 | `data/nc.js` | The NeetCode 150 list, generated from NeetCode's own data. |
 | `config.js` | Your Supabase URL and anon key (empty until you fill them in). |
@@ -55,5 +60,7 @@ Then open http://localhost:8765. Stop it with `Ctrl+C`.
 
 - To change a day's design session, edit its entry in `DESIGN` in `data/plan.js` (entry 1 = day 1). Each entry has:
   `k` (track: `lld`, `hld`, `res`, `beh`, `mock`), `t` title, `d` description, `l` links as `[label, url]`, and `q` self-check questions.
+- To put a link inside a sentence, write `[text](https://…)` in a description or question; the page turns it into a link.
+- Links for career tasks live in `CAREER_LINKS`.
 - Career tasks are in `CAREER`, keyed by day number. The DSA tasks for days 51–60 are in `DSA_LATE`.
 - Ticks are stored by key (`p:<leetcode-slug>` for problems, `d<day>:design`, `d<day>:career`, `d<day>:dsa`), so editing text doesn't lose progress. Moving an item to a different day does change which day it counts towards.
