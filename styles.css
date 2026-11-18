@@ -331,3 +331,4 @@ button.chip{font:inherit;font-size:13px;font-weight:550;cursor:pointer}
 .jnotes:focus{padding:9px 13px}
 @media (max-width:600px){.jstats{grid-template-columns:repeat(3,minmax(0,1fr))}.jstatus{margin-left:0;width:100%}.jstatus select{width:100%}.jtop{grid-template-columns:auto minmax(0,1fr)}.jmatch{grid-column:1/-1;text-align:left;display:flex;gap:6px;align-items:baseline}}
 .jhead-actions{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 16px}
+.jmail.letter{font-family:inherit;font-size:14px;line-height:1.6;max-height:none}

@@ -76,6 +76,13 @@ async function importFolder(fileList) {
       if (error) { importing = ""; render(); snack("Upload failed: " + error.message, "error"); return; }
       data.resume_path = path; data.resume_name = j.resume.split("/").pop();
     } else missing++;
+    const cov = j.cover_pdf && byPath.get(root + j.cover_pdf);
+    if (cov) {
+      const path = `${user.id}/${await hashKey(key)}-cover.pdf`;
+      const { error } = await sb.storage.from("resumes").upload(path, cov, { upsert: true, contentType: "application/pdf" });
+      if (error) { importing = ""; render(); snack("Upload failed: " + error.message, "error"); return; }
+      data.cover_path = path;
+    }
     const mail = j.email_draft && byPath.get(root + j.email_draft);
     if (mail) data.email_text = await mail.text();
     out.push({ user_id: user.id, key, data, imported_at: new Date().toISOString() });
@@ -144,11 +151,13 @@ function jobCard(r) {
   <div class="jrow"><span class="jpill ${d.india_eligible === "yes" ? "ok" : "unk"}">India: ${esc(d.india_eligible)}</span><span class="body-s q">${esc(d.eligibility_evidence)}</span></div>
   ${fit.gaps && fit.gaps.length ? `<div class="jrow"><span class="body-s">Not on your resume:</span>${fit.gaps.map(g => `<span class="tag k-mock">${esc(g)}</span>`).join("")}</div>` : ""}
   ${d.notes ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">info</span>Search notes<span class="icon chev">expand_more</span></summary><p class="body-s" style="margin:0;padding:4px 14px 12px">${esc(d.notes)}</p></details>` : ""}
-  ${d.cover_note ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">edit_note</span>Cover note (for a cover-letter box or a referral request)<span class="icon chev">expand_more</span></summary><pre class="jmail">${esc(d.cover_note)}</pre><div style="padding:0 12px 12px"><button class="btn tonal ripple" data-copy="${esc(r.key)}" data-what="cover_note"><span class="icon">content_copy</span>Copy text</button></div></details>` : ""}
+  ${d.cover_letter ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">edit_note</span>Cover letter for this job${(d.cover_check || []).length ? ' <span class="jpill unk">read before sending</span>' : ""}<span class="icon chev">expand_more</span></summary>${(d.cover_check || []).length ? `<p class="body-s" style="margin:0;padding:4px 14px 0;color:var(--error, #b3261e)">Check: ${esc(d.cover_check.join("; "))}</p>` : ""}<pre class="jmail letter">${esc(d.cover_letter)}</pre><div style="padding:0 12px 12px"><button class="btn tonal ripple" data-copy="${esc(r.key)}" data-what="cover_letter"><span class="icon">content_copy</span>Copy text</button></div></details>`
+    : d.cover_note ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">edit_note</span>Short note (for a referral request)<span class="icon chev">expand_more</span></summary><pre class="jmail">${esc(d.cover_note)}</pre><div style="padding:0 12px 12px"><button class="btn tonal ripple" data-copy="${esc(r.key)}" data-what="cover_note"><span class="icon">content_copy</span>Copy text</button></div></details>` : ""}
   ${d.email_text ? `<details class="quiz"><summary><span class="icon" style="font-size:18px">mail</span>Email draft to ${esc(d.contact_email)}<span class="icon chev">expand_more</span></summary><pre class="jmail">${esc(d.email_text)}</pre><div style="padding:0 12px 12px"><button class="btn tonal ripple" data-copy="${esc(r.key)}" data-what="email_text"><span class="icon">content_copy</span>Copy text</button></div></details>` : ""}
   ${(d.referrals || []).length ? `<div class="jrow"><span class="body-s">Ask for a referral:</span>${d.referrals.filter(x => safeUrl(x.url)).map(x => `<a class="chip ripple" href="${esc(x.url)}" target="_blank" rel="noopener"><span class="icon">group</span><span class="t">${esc(x.label)}</span></a>`).join("")}</div>` : ""}
   <div class="jactions">
     ${d.resume_path ? `<button class="btn filled ripple" data-resume="${esc(d.resume_path)}"><span class="icon">description</span>Tailored resume</button>` : ""}
+    ${d.cover_path ? `<button class="btn tonal ripple" data-resume="${esc(d.cover_path)}"><span class="icon">article</span>Cover letter PDF</button>` : ""}
     ${url ? `<a class="btn outlined ripple" href="${esc(url)}" target="_blank" rel="noopener"><span class="icon">open_in_new</span>Posting</a>` : ""}
     ${apply && apply !== url ? `<a class="btn outlined ripple" href="${esc(apply)}" target="_blank" rel="noopener"><span class="icon">send</span>Apply</a>` : ""}
     <label class="jstatus"><span class="sr">Status</span><select class="input" data-status="${esc(r.key)}">${STATUSES.map(([v, l]) => `<option value="${v}"${r.status === v ? " selected" : ""}>${l}</option>`).join("")}</select></label>
